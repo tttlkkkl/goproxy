@@ -174,6 +174,6 @@ func modInit() {
 func modClear() {
 	pwd, err := os.Getwd()
 	fmt.Println("go mod clear 临时工作目录:", pwd, err)
-	err = os.RemoveAll(modTmpDir)
-	fmt.Println("清空目录结果:", err)
+	//err = os.RemoveAll(modTmpDir)
+	//fmt.Println("清空目录结果:", err)
 }

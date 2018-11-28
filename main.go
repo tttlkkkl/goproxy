@@ -157,28 +157,33 @@ func goGet(path, version, suffix string, w http.ResponseWriter, r *http.Request)
 }
 func modInit() string {
 	tmpDir := path.Dir(modTmpDir) + "/" + UUID.String()
+	os.Chdir(tmpDir)
+	err := os.MkdirAll(tmpDir, 0755)
+	if err != nil {
+		fmt.Println("临时目录创建失败:", err)
+	}
 	goModFile := tmpDir + "/" + "go.mod"
-	_, err := os.Create(goModFile)
+	_, err = os.Create(goModFile)
 	if err != nil {
 		fmt.Println("临时文件创建失败:", err)
 	}
-	os.Chdir(modTmpDir)
-	pwd, err := os.Getwd()
-	fmt.Println("go mod init 临时工作目录:", pwd, err)
-	cmd := exec.Command("go", "mod", "init")
-	stdout, err := cmd.StdoutPipe()
-
-	if err := cmd.Start(); err != nil {
-		fmt.Println(err)
-	}
-	bytesErr, err := ioutil.ReadAll(stdout)
-	fmt.Println("go mod init 执行结果:", string(bytesErr))
-	if err != nil {
-		fmt.Println(err)
-	}
-	if err := cmd.Wait(); err != nil {
-		fmt.Println(err)
-	}
+	//os.Chdir(modTmpDir)
+	//pwd, err := os.Getwd()
+	//fmt.Println("go mod init 临时工作目录:", pwd, err)
+	//cmd := exec.Command("go", "mod", "init")
+	//stdout, err := cmd.StdoutPipe()
+	//
+	//if err := cmd.Start(); err != nil {
+	//	fmt.Println(err)
+	//}
+	//bytesErr, err := ioutil.ReadAll(stdout)
+	//fmt.Println("go mod init 执行结果:", string(bytesErr))
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+	//if err := cmd.Wait(); err != nil {
+	//	fmt.Println(err)
+	//}
 	return tmpDir
 }
 func modClear(dir string) {

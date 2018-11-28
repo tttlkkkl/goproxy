@@ -35,7 +35,7 @@ func main() {
 	fmt.Fprintf(os.Stdout, "goproxy: %s inited.\n", time.Now().Format("2006-01-02 15:04:05"))
 	gp := filepath.SplitList(gpEnv)
 	cacheDir = filepath.Join(gp[0], "pkg", "mod", "cache", "download")
-	modTmpDir = filepath.Join(gp[0], "pkg", "mod", "tmp")
+	modTmpDir = filepath.Join(gp[0], "pkg", "mod", "tmp","/")
 	if _, err := os.Stat(modTmpDir); os.IsNotExist(err) {
 		fmt.Fprintf(os.Stdout, "goproxy: %s tmp dir is not exist. %s\n", time.Now().Format("2006-01-02 15:04:05"), modTmpDir)
 		os.MkdirAll(modTmpDir, 0755)

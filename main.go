@@ -159,7 +159,7 @@ func goGet(path, version, suffix string, w http.ResponseWriter, r *http.Request)
 	return nil
 }
 func modInit() string {
-	tmpDir := path.Dir(modTmpDir) + "/" + UUID.String()
+	tmpDir := modTmpDir + UUID.String()
 	err := os.MkdirAll(tmpDir, 0755)
 	if err != nil {
 		fmt.Println("临时目录创建失败:", err)

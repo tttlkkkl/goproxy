@@ -41,7 +41,7 @@ func main() {
 		os.MkdirAll(modTmpDir, 0755)
 		createFile(modTmpDir)
 	}
-	//os.Chdir(modTmpDir)
+	os.Chdir(modTmpDir)
 	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
 		fmt.Fprintf(os.Stdout, "goproxy: %s cache dir is not exist. %s\n", time.Now().Format("2006-01-02 15:04:05"), cacheDir)
 		os.MkdirAll(cacheDir, 0755)
@@ -103,8 +103,8 @@ func mainHandler(inner http.Handler) http.Handler {
 }
 
 func goGet(path, version, suffix string, w http.ResponseWriter, r *http.Request) error {
-	dir := modInit()
-	os.Chdir(dir)
+	//dir := modInit()
+	//os.Chdir(dir)
 	//defer func(dir string) {
 	//	modClear(dir)
 	//}(dir)

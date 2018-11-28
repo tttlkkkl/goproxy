@@ -17,6 +17,7 @@ import (
 
 var cacheDir string
 var listen string
+var modTmpDir string
 
 func init() {
 	flag.StringVar(&listen, "listen", "0.0.0.0:8081", "service listen address")
@@ -31,6 +32,12 @@ func main() {
 	fmt.Fprintf(os.Stdout, "goproxy: %s inited.\n", time.Now().Format("2006-01-02 15:04:05"))
 	gp := filepath.SplitList(gpEnv)
 	cacheDir = filepath.Join(gp[0], "pkg", "mod", "cache", "download")
+	modTmpDir = filepath.Join(gp[0], "pkg", "mod", "tmp")
+	if _, err := os.Stat(modTmpDir); os.IsNotExist(err) {
+		fmt.Fprintf(os.Stdout, "goproxy: %s tmp dir is not exist. %s\n", time.Now().Format("2006-01-02 15:04:05"), modTmpDir)
+		os.MkdirAll(modTmpDir, 0755)
+		os.Chdir(modTmpDir)
+	}
 	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
 		fmt.Fprintf(os.Stdout, "goproxy: %s cache dir is not exist. %s\n", time.Now().Format("2006-01-02 15:04:05"), cacheDir)
 		os.MkdirAll(cacheDir, 0755)
@@ -92,6 +99,10 @@ func mainHandler(inner http.Handler) http.Handler {
 }
 
 func goGet(path, version, suffix string, w http.ResponseWriter, r *http.Request) error {
+	modInit()
+	defer func() {
+		modClear()
+	}()
 	cmd := exec.Command("go", "get", "-d", path+"@"+version)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -141,4 +152,28 @@ func goGet(path, version, suffix string, w http.ResponseWriter, r *http.Request)
 		}
 	}
 	return nil
+}
+func modInit() {
+	pwd, err := os.Getwd()
+	fmt.Println("go mod init 临时工作目录:", pwd, err)
+	cmd := exec.Command("go", "mod", "init")
+	stdout, err := cmd.StdoutPipe()
+
+	if err := cmd.Start(); err != nil {
+		fmt.Println(err)
+	}
+	bytesErr, err := ioutil.ReadAll(stdout)
+	fmt.Println("go mod init 执行结果:", string(bytesErr))
+	if err != nil {
+		fmt.Println(err)
+	}
+	if err := cmd.Wait(); err != nil {
+		fmt.Println(err)
+	}
+}
+func modClear() {
+	pwd, err := os.Getwd()
+	fmt.Println("go mod clear 临时工作目录:", pwd, err)
+	err = os.RemoveAll(modTmpDir)
+	fmt.Println("清空目录结果:", err)
 }

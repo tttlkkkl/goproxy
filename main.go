@@ -39,12 +39,9 @@ func main() {
 	if _, err := os.Stat(modTmpDir); os.IsNotExist(err) {
 		fmt.Fprintf(os.Stdout, "goproxy: %s tmp dir is not exist. %s\n", time.Now().Format("2006-01-02 15:04:05"), modTmpDir)
 		os.MkdirAll(modTmpDir, 0755)
-		goModFile := path.Dir(modTmpDir) + "/" + "go.mod"
-		_, err = os.Create(goModFile)
-		if err != nil {
-			fmt.Println("临时文件创建失败:", err)
-		}
+		createFile(modTmpDir)
 	}
+	os.Chdir(modTmpDir)
 	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
 		fmt.Fprintf(os.Stdout, "goproxy: %s cache dir is not exist. %s\n", time.Now().Format("2006-01-02 15:04:05"), cacheDir)
 		os.MkdirAll(cacheDir, 0755)
@@ -106,11 +103,11 @@ func mainHandler(inner http.Handler) http.Handler {
 }
 
 func goGet(path, version, suffix string, w http.ResponseWriter, r *http.Request) error {
-	dir := modInit()
-	os.Chdir(dir)
-	defer func(dir string) {
-		modClear(dir)
-	}(dir)
+	//dir := modInit()
+	//os.Chdir(dir)
+	//defer func(dir string) {
+	//	modClear(dir)
+	//}(dir)
 	cmd := exec.Command("go", "get", "-d", path+"@"+version)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -168,15 +165,7 @@ func modInit() string {
 	if err != nil {
 		fmt.Println("临时目录创建失败:", err)
 	}
-	goModFile := tmpDir + "/" + "go.mod"
-	_, err = os.Create(goModFile)
-	if err != nil {
-		fmt.Println("临时文件创建失败:", err)
-	}
-	err = ioutil.WriteFile(goModFile, []byte("module tmp"), 0755)
-	if err != nil {
-		fmt.Println("临时文件写入失败失败:", err)
-	}
+	createFile(tmpDir)
 	return tmpDir
 }
 func modClear(dir string) {
@@ -184,4 +173,16 @@ func modClear(dir string) {
 	fmt.Println("go mod clear 临时工作目录:", pwd, err)
 	err = os.RemoveAll(dir)
 	fmt.Println("清空目录结果:", err)
+}
+
+func createFile(tmpDir string)  {
+	goModFile := tmpDir + "/" + "go.mod"
+	_, err := os.Create(goModFile)
+	if err != nil {
+		fmt.Println("临时文件创建失败:", err)
+	}
+	err = ioutil.WriteFile(goModFile, []byte("module tmp"), 0755)
+	if err != nil {
+		fmt.Println("临时文件写入失败失败:", err)
+	}
 }

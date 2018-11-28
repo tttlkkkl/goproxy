@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/satori/go.uuid"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -18,6 +19,7 @@ import (
 var cacheDir string
 var listen string
 var modTmpDir string
+var UUID uuid.UUID
 
 func init() {
 	flag.StringVar(&listen, "listen", "0.0.0.0:8081", "service listen address")
@@ -29,6 +31,7 @@ func main() {
 	if gpEnv == "" {
 		panic("can not find $GOPATH")
 	}
+	UUID = uuid.NewV4()
 	fmt.Fprintf(os.Stdout, "goproxy: %s inited.\n", time.Now().Format("2006-01-02 15:04:05"))
 	gp := filepath.SplitList(gpEnv)
 	cacheDir = filepath.Join(gp[0], "pkg", "mod", "cache", "download")
@@ -98,10 +101,10 @@ func mainHandler(inner http.Handler) http.Handler {
 }
 
 func goGet(path, version, suffix string, w http.ResponseWriter, r *http.Request) error {
-	modInit()
-	defer func() {
-		modClear()
-	}()
+	dir := modInit()
+	defer func(dir string) {
+		modClear(dir)
+	}(dir)
 	cmd := exec.Command("go", "get", "-d", path+"@"+version)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -152,7 +155,13 @@ func goGet(path, version, suffix string, w http.ResponseWriter, r *http.Request)
 	}
 	return nil
 }
-func modInit() {
+func modInit() string {
+	tmpDir := path.Dir(modTmpDir) + "/" + UUID.String()
+	goModFile := tmpDir + "/" + "go.mod"
+	_, err := os.Create(goModFile)
+	if err != nil {
+		fmt.Println("临时文件创建失败:", err)
+	}
 	os.Chdir(modTmpDir)
 	pwd, err := os.Getwd()
 	fmt.Println("go mod init 临时工作目录:", pwd, err)
@@ -170,10 +179,11 @@ func modInit() {
 	if err := cmd.Wait(); err != nil {
 		fmt.Println(err)
 	}
+	return tmpDir
 }
-func modClear() {
+func modClear(dir string) {
 	pwd, err := os.Getwd()
 	fmt.Println("go mod clear 临时工作目录:", pwd, err)
-	//err = os.RemoveAll(modTmpDir)
-	//fmt.Println("清空目录结果:", err)
+	err = os.RemoveAll(dir)
+	fmt.Println("清空目录结果:", err)
 }

@@ -1,4 +1,7 @@
 goproxy
-build/*
 go_repos/*
+cacheDir/*
 .idea/*
+bin/*
+
+internal/

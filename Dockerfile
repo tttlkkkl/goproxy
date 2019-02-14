@@ -1,8 +1,21 @@
-FROM golang:1.11
+FROM golang:alpine AS build
 
-COPY ./ /goproxy
-WORKDIR /goproxy
-RUN go build
+RUN apk add --no-cache -U make
 
-CMD ["/goproxy/goproxy","-listen=0.0.0.0:8080"]
+COPY . /src/goproxy
+RUN cd /src/goproxy &&\
+    export CGO_ENABLED=0 &&\
+    make
 
+FROM alpine:latest
+
+RUN apk add --no-cache -U git mercurial subversion bzr fossil
+
+COPY --from=build /src/goproxy/bin/goproxy /goproxy
+
+VOLUME /go
+
+EXPOSE 8081
+
+ENTRYPOINT ["/goproxy"]
+CMD []
